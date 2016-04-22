@@ -179,6 +179,8 @@ MaterialMenu.prototype.init = function () {
   const dbVersion = 1;
   const storeName = 'users';
 
+  let user;
+
   function indexedDBOk() {
     return 'indexedDB' in window;
   }
@@ -294,14 +296,15 @@ MaterialMenu.prototype.init = function () {
 
       var editUserBtn = tableRow.querySelector('.edit-user-button');
 
-      const user = {
+      const userData = {
         userName: value.userName,
         userCountry: value.userCountry,
         userEmail: value.userEmail,
         id: key
       };
       editUserBtn.addEventListener('click', function() {
-        showDialog('Edit user', true, user);
+        // console.log(key);
+        showDialog('Edit user', editUser, userData);
       });
     }
 
@@ -347,7 +350,9 @@ MaterialMenu.prototype.init = function () {
     });
   }
 
-  function editUser(user) {
+  function editUser(userData) {
+    const user = Object.assign({}, userData);
+    // console.log('EditUser: ', user.id);
     const transaction = db.transaction([storeName], 'readwrite');
     const objectStore = transaction.objectStore(storeName);
     const request = objectStore.put(user);
@@ -367,8 +372,10 @@ MaterialMenu.prototype.init = function () {
     });
   }
 
-  function showDialog(dialogTitle, userEdit, userObj) {
-    let user = {};
+  function showDialog(dialogTitle, func, userData) {
+    userData = userData || {};
+    user = Object.assign({}, userData);
+    // console.log(user.id);
 
     var dialog = document.querySelector('dialog');
     var title = dialog.querySelector('.mdl-dialog__title');
@@ -376,10 +383,10 @@ MaterialMenu.prototype.init = function () {
     var userCountry = dialog.querySelector('#userCountry');
     var userEmail = dialog.querySelector('#userEmail');
 
-    if (userEdit) {
-      userName.value = userObj.userName;
-      userCountry.value = userObj.userCountry;
-      userEmail.value = userObj.userEmail;
+    if (userData) {
+      userName.value = userData.userName;
+      userCountry.value = userData.userCountry;
+      userEmail.value = userData.userEmail;
     }
 
     while (title.hasChildNodes()) {
@@ -405,15 +412,8 @@ MaterialMenu.prototype.init = function () {
         user.userName = userName.value;
         user.userCountry = userCountry.value;
         user.userEmail = userEmail.value;
-        
-        if (userEdit) {
-          console.log('Editing');
-          user.id = userObj.id;
-          editUser(user);
-        } else {
-          console.log('Adding');
-          addUser(user);
-        }
+
+        func(user);
 
         userName.value = '';
         userCountry.value = '';
@@ -489,7 +489,7 @@ MaterialMenu.prototype.init = function () {
 
     const addUserButton = document.getElementById('add');
     addUserButton.addEventListener('click', function() {
-      showDialog('Add new user', false);
+      showDialog('Add new user', addUser);
     });
 
   }
